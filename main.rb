@@ -11,3 +11,4 @@ require_relative "lib/request"
 a = Request.new(File.read("test/example_requests/get-examples.request.txt"))
 p a.method
 p a.resource
+p a.version
