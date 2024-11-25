@@ -1,13 +1,11 @@
 class Request
 
-  attr_reader :method, :resource, :version
+  attr_reader :method, :resource, :version, :headers, :params
 
   def initialize(request_string)
     lines = request_string.split("\n")
     first_line = lines[0]
-    pp first_line
     the_first_line = first_line.split(" ")
-    pp the_first_line
 
     if the_first_line[0] == "GET"
       @method = :get
@@ -16,5 +14,29 @@ class Request
     end
     @resource = the_first_line[1]
     @version = the_first_line[2]
+    @headers = {}
+    @params = {}
+
+    i = 1
+    while i < lines.length
+      key, value = lines[i].split(": ")
+      @headers[key] = value
+      i += 1
+    end
+
+    if @resource.include?("?")
+      _path, params_string = @resource.split("?")
+      params_string2 = params_string.split("&")
+      i = 0
+        while i < params_string2.length
+          key, value = params_string2[i].split("=")
+          @params[key] = value
+          i += 1
+        end
+      # else
+        # post_param = @resource.split("&")
+        # p post_param
+    end
+
   end
 end

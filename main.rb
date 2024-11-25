@@ -8,7 +8,9 @@ require_relative "lib/request"
 
 # p y
 
-a = Request.new(File.read("test/example_requests/get-examples.request.txt"))
+a = Request.new(File.read("test/example_requests/post-login.request.txt"))
 p a.method
 p a.resource
 p a.version
+p a.headers
+p a.params
