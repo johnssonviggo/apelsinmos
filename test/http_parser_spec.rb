@@ -85,7 +85,7 @@ describe 'Request' do
             request = Request.new(request_string)
             _(request.params).must_equal params
         end
-
+        
         # it 'parses the params' do
         #     request_string = File.read('test/example_requests/post-login.request.txt')
         #     params = {"type" => "bananas", "minrating" => "4"}
