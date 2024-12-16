@@ -13,7 +13,8 @@ class HTTPServer
         puts "Listening on #{@port}"
         router = Router.new
         router.add_route(:get, "/banan") do
-            "<h1>BANAN</h1>"
+            "<h1>#{1 + 2}BANAN</h1>
+            <img src='/img/banan.png'>"
         end
         router.add_route(:get, "/senap") do
             "<h1>SENAP</h1>"
@@ -35,7 +36,9 @@ class HTTPServer
             result = router.match_route(request)
             if result
               status = 200
-              html = "<h1>Hej, World!</h1>"
+              html = result[:block].call
+            elsif #filen finns i public-mappen?
+
             else
               status = 404
               html = "<h1>No found</h1>"
