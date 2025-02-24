@@ -3,26 +3,39 @@ require_relative 'request'
 require_relative 'router'
 require 'mime-types'
 
+# Path to the public directory for serving static files.
 PUBLIC_DIR = File.expand_path("../public", __dir__)
 
+# A simple HTTP server implementation.
 class HTTPServer
-
+    # Initializes the HTTP server with a specified port.
+    #
+    # @param port [Integer] The port number the server will listen on.
     def initialize(port)
         @port = port
     end
 
+    # Starts the HTTP server, listens for incoming requests, and routes them.
+    #
+    # @return [void]
     def start
         server = TCPServer.new(@port)
         puts "Listening on #{@port}"
+
+        # Initialize router and define routes.
         router = Router.new
         router.add_route(:get, "/banan") do
             File.read("views/index.html")
         end
         router.add_route(:get, "/senap") do
             "<h1>SENAP</h1>"
+            "<img>src='public/img/raft.png'</img>"
+        end
+        router.add_route(:get, "/hejsan") do
+            "<h1>HEJSAN</h1>"
         end
 
-
+        # Accept and process incoming requests.
         while session = server.accept
             data = ""
             while line = session.gets and line !~ /^\s*$/
@@ -34,17 +47,7 @@ class HTTPServer
             puts "-" * 40
 
             request = Request.new(data)
-            # pp request
             matching_route = router.match_route(request)
-            # if matching_route
-            #     response = Response.new(matching_route, session)
-            # elsif #kolla om filen finns i public
-            #     filen = ....
-            #     response = Response.new(filen, session)
-            # else
-            #     data = "Oh noes"
-            #     response = Response.new(data, session, 404)
-            # end
 
             if matching_route
                 response = Response.new(matching_route[:block].call, session)
@@ -53,7 +56,7 @@ class HTTPServer
             if File.exist?(file_path) && File.file?(file_path)
                     response = Response.new(file_path, session, file: true)
             else
-                    #404 Not found
+                    # 404 Not found
                     response = Response.new("Oh noes", session, status: 404)
             end
         end
@@ -65,8 +68,15 @@ class HTTPServer
     end
 end
 
+# A class representing HTTP response.
 class Response
 
+    # Initializes a new HTTP response.
+    #
+    # @param result [String] The response body content or file path.
+    # @param session [TCPSocket] The active client session.
+    # @param file [Boolean] Whether the response is serving a file.
+    # @param status [Integer] The HTTP status code (default: 200).
     def initialize(result, session, file: false, status: 200)
         @session = session
         @result = result
@@ -74,21 +84,10 @@ class Response
         @file = file
     end
 
-
+    # Sends the response to the client.
+    #
+    # @return [void]
     def send
-        # if @result
-        #     content_type = "text/html"
-        #     content = @result[:block].call
-
-        # elsif File.exist?(file_path)
-        #     file_path = File.join(PUBLIC_DIR, request.resource)
-        #     content_type = MIME::Types.type_for(file_path).first.to_s || "application/octet-stream"
-        #     content = File.binread(file_path)
-        # else
-        #   content_type = "text/html"
-        #   content = "<h1>No found</h1>"
-        # end
-
         if @file
             content_type = MIME::Types.type_for(@result).first.to_s || "application/octet-stream"
             content = File.binread(@result)
@@ -108,6 +107,9 @@ class Response
 
     private
 
+  # Returns the status message corresponding to the HTTP status code.
+  #
+  # @return [String] The status message.
   def status_message
     case @status
     when 200 then "OK"
@@ -118,5 +120,6 @@ class Response
   end
 end
 
+# Start the HTTP server on port 4567.
 server = HTTPServer.new(4567)
 server.start
