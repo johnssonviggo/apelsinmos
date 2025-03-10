@@ -32,7 +32,11 @@ class HTTPServer
             "<img>src='public/img/raft.png'</img>"
         end
         router.add_route(:get, "/hejsan") do
-            "<h1>HEJSAN</h1>"
+            "<h1>HEJSAN</h1>
+            <form action='/banan' method='post'>
+                <input type='text' name='username'>
+                <button type='submit'>Skicka</button>
+            </form>"
         end
 
         # Accept and process incoming requests.
@@ -46,7 +50,17 @@ class HTTPServer
             puts data
             puts "-" * 40
 
+            p "DATA:"
+            pp data
+            p "---------------------------------"
+
             request = Request.new(data)
+
+            if request.method == :post
+              body = session.gets(request.headers["Content-Length"].to_i)
+              request.add_post_params(body)
+            end
+
             matching_route = router.match_route(request)
 
             if matching_route
@@ -69,6 +83,8 @@ class HTTPServer
 end
 
 # A class representing HTTP response.
+#
+# Responsible for sending HTTP responses to the client, including setting the status, content type, and content.
 class Response
 
     # Initializes a new HTTP response.
@@ -85,6 +101,9 @@ class Response
     end
 
     # Sends the response to the client.
+    #
+    # Depending on whether the response is serving a file or plain content, this method sets the appropriate headers
+    # and sends the response body to the client.
     #
     # @return [void]
     def send

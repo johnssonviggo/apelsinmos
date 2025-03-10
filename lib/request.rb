@@ -39,24 +39,42 @@ attr_reader :params
     # Parse headers
     i = 1
     while i < lines.length
-      key, value = lines[i].split(": ") # Split header line into key-value pair
+      key, value = lines[i].split(": ", 2)
       @headers[key] = value
       i += 1
     end
 
-     # Parse query parameters from the URL
+    # Extracts the body if it exists
+    body_index = lines.index("")
+    @body = body_index ? lines[(body_index + 1)..].join("\n") : nil
+
+    # Parses the query parameters if present in the URL
     if @resource.include?("?")
-      _path, params_string = @resource.split("?")  # Separate path from query string
+      _path, params_string = @resource.split("?", 2)
       params_string2 = params_string.split("&")
       i = 0
         while i < params_string2.length
-          key, value = params_string2[i].split("=") # Split each query param into key-value pair
-          @params[key] = value
+          key, value = params_string2[i].split("=",2 )
+          @params[key] = value if key
           i += 1
         end
-      # else
-        # post_param = @resource.split("&")
-        # p post_param
+      end
+    end
 
-  end
+    # Adds POST params to the request.
+    #
+    # This method is used to extract parameters from the request body when handling POST requests.
+    #
+    # @param body [string] the raw body content from the HTTP request.
+    # @return [void]
+
+    def add_post_params(body)
+      post_params = body.split("&")
+      i = 0
+      while i < post_params.length
+        key, value = post_params[i].split("=", 2)
+        @params[key] = value if key
+        i += 1
+      end
+    end
 end
