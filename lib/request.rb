@@ -1,12 +1,17 @@
+# Represents HTTP request, parsing its components such as method, resource, version, headers and params.
+#
+# This class is responsible for parsing an HTTP request string and extracting its various components,
+# such as the HTTP method, resource path, headers, query parameters, and body. The extracted
+# information is then stored in instance variables for easy access.
 class Request
 # @return [Symbol] The HTTP method (:get or :post)
 attr_reader :method
 
-# @return [String] The requested resource path (e.g., "/index.html")
+# @return [String] The requested resource path (e.g, "/index.html")
 attr_reader :resource
 
 
-# @return [String] The HTTP version (e.g., "HTTP/1.1")
+# @return [String] The HTTP version (e.g, "HTTP/1.1")
 attr_reader :version
 
 # @return [Hash] The HTTP headers as key-value pairs
@@ -18,7 +23,18 @@ attr_reader :params
 
   # Parses an HTTP request string and draw out its components.
   #
+  # This method processes the raw HTTP request string, extracting the HTTP method, resource path,
+  # version, headers, and query parameters. It also handles the parsing of the request body, if present.
+  #
   # @param request_string [String] The raw HTTP request received from the client.
+  # @return [void]
+  #
+  # @example
+  #   request = Request.new("GET /index.html HTTP/1.1\nHost: example.com\n...")
+  #   request.method  # => :get
+  #   request.resource  # => "/index.html"
+  #   request.headers  # => { "Host" => "example.com", ... }
+  #   request.params  # => { "param1" => "value1", ... }
   def initialize(request_string)
     lines = request_string.split("\n")  # Split request into lines
     first_line = lines[0]               # Extract the request line (e.g., "GET /index.html HTTP/1.1")
@@ -65,9 +81,11 @@ attr_reader :params
     #
     # This method is used to extract parameters from the request body when handling POST requests.
     #
-    # @param body [string] the raw body content from the HTTP request.
+    # @param body [String] the raw body content from the HTTP request.
     # @return [void]
-
+    # @example
+    #   request.add_post_params("key1=value1&key2=value2")
+    #   request.params  # => { "key1" => "value1", "key2" => "value2" }
     def add_post_params(body)
       post_params = body.split("&")
       i = 0

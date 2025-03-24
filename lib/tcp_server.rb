@@ -2,20 +2,31 @@ require 'socket'
 require_relative 'request'
 require_relative 'router'
 require 'mime-types'
+require 'json'
 
 # Path to the public directory for serving static files.
 PUBLIC_DIR = File.expand_path("../public", __dir__)
 
 # A simple HTTP server implementation.
+#
+# This class sets up a basic HTTP server that listens for incoming requests,
+# processes them, and sends appropriate responses back to the client.
 class HTTPServer
     # Initializes the HTTP server with a specified port.
     #
     # @param port [Integer] The port number the server will listen on.
+    # @return [void]
     def initialize(port)
         @port = port
     end
 
+
+
     # Starts the HTTP server, listens for incoming requests, and routes them.
+    #
+    # The server listens on the specified port, processes incoming HTTP requests,
+    # and matches them against the defined routes. If a match is found, the corresponding
+    # block is executed to generate the response. Static files can also be served.
     #
     # @return [void]
     def start
@@ -29,7 +40,7 @@ class HTTPServer
         end
         router.add_route(:get, "/senap") do
             "<h1>SENAP</h1>"
-            "<img>src='public/img/raft.png'</img>"
+            "<img src='/img/raft.png'/>"
         end
         router.add_route(:get, "/hejsan") do
             "<h1>HEJSAN</h1>
@@ -37,6 +48,23 @@ class HTTPServer
                 <input type='text' name='username'>
                 <button type='submit'>Skicka</button>
             </form>"
+
+        end
+
+        router.add_route(:post, "/banan") do |params|
+
+            puts "IN POST /banan"
+
+            require 'debug'
+            binding.break
+
+            puts "hello #{params['username']}"
+
+            redirect "/users/#{'username'}"
+        end
+
+        router.add_route(:get, "/users/:id") do |session, params|
+            Response.json(session, { id: params["id"], name: "Användare #{params['id']}" })
         end
 
         # Accept and process incoming requests.
@@ -63,18 +91,19 @@ class HTTPServer
 
             matching_route = router.match_route(request)
 
+
             if matching_route
-                response = Response.new(matching_route[:block].call, session)
+                response = Response.new(matching_route[:block].call(request.params), session)
             else
                 file_path = File.join(PUBLIC_DIR, request.resource)
             if File.exist?(file_path) && File.file?(file_path)
                     response = Response.new(file_path, session, file: true)
             else
                     # 404 Not found
-                    response = Response.new("Oh noes", session, status: 404)
+                    response = Response.new("Oh noes, 404 Not Found", session, status: 404)
             end
-        end
 
+        end
 
             response.send
 
@@ -112,7 +141,7 @@ class Response
             content = File.binread(@result)
         else
           content_type = "text/html"
-          content = @result
+          content = @result || ""  # Sets content to empty string if @result is nil
         end
 
 
@@ -123,6 +152,21 @@ class Response
         @session.print content
         @session.close
     end
+
+    # Sends a JSON response.
+    #
+    # @param session [TCPSocket] The active client session.
+    # @param data [Hash] The data to send as a JSON response.
+    # @param status [Integer] The HTTP status code (default: 200).
+    # @return [void]
+    def self.json(session, data, status: 200)
+        json_content = JSON.generate(data)
+        session.print "HTTP/1.1 #{status}\r\n"
+        session.print "Content-Type: application/json\r\n"
+        session.print "Content-Length: #{json_content.bytesize}\r\n"
+        session.print "\r\n"
+        session.print json_content
+      end
 
     private
 
