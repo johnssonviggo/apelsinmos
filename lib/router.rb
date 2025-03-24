@@ -36,6 +36,7 @@ class Router
   # or nil if no match is found.
   def match_route(request)
     @routes.each do |route|
+      match = request.resource.match(route[:regex])
       if route[:method] == request.method && match = request.resource.match(route[:regex])
         params = extract_params(route[:resource], match.captures)
         return { block: route[:block], params: params }

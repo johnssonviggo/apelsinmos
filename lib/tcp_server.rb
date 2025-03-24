@@ -39,8 +39,8 @@ class HTTPServer
             File.read("views/index.html")
         end
         router.add_route(:get, "/senap") do
-            "<h1>SENAP</h1>"
-            "<img src='/img/raft.png'/>"
+            "<h1>SENAP</h1>
+            <img src='/img/raft.png'/>"
         end
         router.add_route(:get, "/hejsan") do
             "<h1>HEJSAN</h1>
@@ -50,18 +50,30 @@ class HTTPServer
             </form>"
 
         end
+        router.add_route(:get, "/") do
+            "<h1>Startsida</h1>
+            <a href='/banan'>
+                <button type'button'>Knapp 1</button>
+            </a>
 
-        router.add_route(:post, "/banan") do |params|
-
-            puts "IN POST /banan"
-
-            require 'debug'
-            binding.break
-
-            puts "hello #{params['username']}"
-
-            redirect "/users/#{'username'}"
+            <a href='/senap'>
+                <button type'button'>Knapp 2</button>
+            </a>
+            "
         end
+
+
+        # router.add_route(:post, "/banan") do |params|
+
+        #     puts "IN POST /banan"
+
+        #     require 'debug'
+        #     binding.break
+
+        #     puts "hello #{params['username']}"
+
+        #     redirect "/users/#{'username'}"
+        # end
 
         router.add_route(:get, "/users/:id") do |session, params|
             Response.json(session, { id: params["id"], name: "Användare #{params['id']}" })
@@ -93,7 +105,7 @@ class HTTPServer
 
 
             if matching_route
-                response = Response.new(matching_route[:block].call(request.params), session)
+                response = Response.new(matching_route[:block].call(session, request.params), session)
             else
                 file_path = File.join(PUBLIC_DIR, request.resource)
             if File.exist?(file_path) && File.file?(file_path)
@@ -136,6 +148,7 @@ class Response
     #
     # @return [void]
     def send
+        begin
         if @file
             content_type = MIME::Types.type_for(@result).first.to_s || "application/octet-stream"
             content = File.binread(@result)
@@ -150,7 +163,11 @@ class Response
         @session.print "Content-Length: #{content.bytesize}\r\n"
         @session.print "\r\n"
         @session.print content
+    rescue Errno::EPIPE
+        puts "Client disconnected before response was sent."
+    ensure
         @session.close
+        end
     end
 
     # Sends a JSON response.
